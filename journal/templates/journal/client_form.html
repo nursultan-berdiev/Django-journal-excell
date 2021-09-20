@@ -13,9 +13,9 @@
             </fieldset>
             <div class="form-group">
                 <button class="btn btn-outline-info" type="submit">
-                    {% if title == 'Создание заявки - Головной' %}
+                    {% if is_create %}
                         Создать
-                    {% elif title == 'Измнение заявки - Головной' %}
+                    {% else %}
                         Изменить
                     {% endif %}
                 </button>

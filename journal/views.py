@@ -63,6 +63,7 @@ def SearchFilterView(request):
     date_min = request.GET.get('date_min')
     date_max = request.GET.get('date_max')
     product = request.GET.get('product')
+    officer = request.GET.get('officer')
     title = 'Результаты поиска - {}'.format(office)
 
     if is_valid_queryparam(search_contains_query):
@@ -85,6 +86,9 @@ def SearchFilterView(request):
 
     if is_valid_queryparam(product) and product != 'Выберите продукт...':
         query_set = query_set.filter(product__product_name=product)
+
+    if is_valid_queryparam(officer) and officer != 'Выберите офицера...':
+        query_set = query_set.filter(credit_user__name=officer)
 
     qs = query_set.values_list('id', flat=True)
     excel_list = []
@@ -206,6 +210,7 @@ class ClientCreateView(CreateView):
     def get_context_data(self, *args, **kwargs):
         context = super(ClientCreateView, self).get_context_data(**kwargs)
         context['title'] = 'Создание заявки - {}'.format(office)
+        context['is_create'] = True
         context['products'] = Product.objects.all()
         return context
 
@@ -227,7 +232,8 @@ class ClientUpdateView(UserPassesTestMixin, UpdateView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(ClientUpdateView, self).get_context_data(**kwargs)
-        context['title'] = 'Измнение заявки - {}'.format(office)
+        context['title'] = 'Изменение заявки - {}'.format(office)
+        context['is_create'] = False
         context['products'] = Product.objects.all()
         return context
 
@@ -235,7 +241,7 @@ class ClientUpdateView(UserPassesTestMixin, UpdateView):
         user = self.get_object().credit_user
         username = name_user(user)
 
-        if self.request.user == username:
+        if self.request.user == username or self.request.user.is_superuser:
             return True
         return False
 

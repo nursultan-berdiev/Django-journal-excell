@@ -132,6 +132,17 @@
                           </select>
                         </div>
                       </div>
+                      <div class="form-row">
+                        <div class="form-group col-md-auto">
+                          <label for="inputState2">Офицер</label>
+                          <select id="inputState2" class="form-control" name="officer">
+                            <option selected>Выберите офицера...</option>
+                              {% for officer in officers %}
+                            <option value="{{officer.name}}">{{ officer.name }}</option>
+                              {% endfor %}
+                          </select>
+                        </div>
+                      </div>
                       <button type="submit" style="margin-left: 60px; padding-left: 30px; padding-right: 30px;" class="btn btn-light">Поиск</button>
                     </form>
             </ul>
@@ -219,4 +230,3 @@
 </body>
 
 </html>
-
