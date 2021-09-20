@@ -2,8 +2,8 @@ import xlsxwriter
 from django.http import HttpResponse
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from users.models import name_user
-from .models import Client, Product
+from users.models import name_user, Officer
+from .models import Client, Product, Office
 from django.shortcuts import render, get_object_or_404
 from openpyxl import *
 from openpyxl.writer.excel import save_virtual_workbook
@@ -12,6 +12,16 @@ from datetime import datetime, timedelta
 
 office = 'Головной'
 key_list_place = 'C:/Python/changan_journal/keylist.xlsx'
+
+
+def next_number(office_id):
+    if Client.objects.filter(office=office_id).count() == 0:
+        return 1
+    else:
+        last_client = Client.objects.filter(office=office_id).order_by('-nomer_zayavki')[0]
+        number = last_client.nomer_zayavki
+        return number + 1
+
 
 def is_valid_queryparam(param):
     return param != '' and param is not None
@@ -40,7 +50,7 @@ class ClientListView(ListView):
 
 
 class ActiveListView(ListView):
-    queryset = Client.objects.filter(status = 'На рассмотрении')
+    queryset = Client.objects.filter(status='На рассмотрении')
     template_name = 'journal/home.html'
     context_object_name = 'clients'
     ordering = ['-nomer_zayavki']
@@ -213,6 +223,13 @@ class ClientCreateView(CreateView):
         context['is_create'] = True
         context['products'] = Product.objects.all()
         return context
+
+    def form_valid(self, form):
+        user = Officer.objects.get(user=self.request.user)
+        office = get_object_or_404(Office, office_id=user.office.office_id)
+        form.instance.office = office
+        form.instance.nomer_zayavki = next_number(office.office_id)
+        return super(ClientCreateView, self).form_valid(form)
 
 
 class ClientUpdateView(UserPassesTestMixin, UpdateView):

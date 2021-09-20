@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.urls import reverse
-from users.models import Officer
+from users.models import Officer, Office
 
 STATUS_CHOICES = (
     ('На рассмотрении', 'На рассмотрении'),
@@ -29,17 +29,16 @@ ISTOCHNIK_CHOISES = (
 )
 
 
-def one_day_more():
-    return timezone.now() + timezone.timedelta(days=1)
-
-
-def next_number():
-    if Client.objects.all().count() == 0:
+def next_number(office_id):
+    if Client.objects.filter(office=office_id).count() == 0:
         return 1
     else:
-        last_client = Client.objects.order_by('-nomer_zayavki')[0]
+        last_client = Client.objects.filter(office=office_id).order_by('-nomer_zayavki')[0]
         number = last_client.nomer_zayavki
         return number + 1
+
+def one_day_more():
+    return timezone.now() + timezone.timedelta(days=1)
 
 
 class Product(models.Model):
@@ -60,7 +59,8 @@ class Product(models.Model):
 
 
 class Client(models.Model):
-    nomer_zayavki = models.IntegerField(unique=True, default=next_number, verbose_name='Номер заявки')
+    office = models.ForeignKey(Office, on_delete=models.CASCADE, verbose_name='Офис')
+    nomer_zayavki = models.IntegerField(unique=True, verbose_name='Номер заявки')
     date_posted = models.DateTimeField(default=timezone.now, verbose_name='Дата заявки')
     fio_klienta = models.CharField(max_length=100, verbose_name='ФИО клиента/Наименование компании')
     summa_zayavki = models.IntegerField(null=False, verbose_name='Сумма заявки')
