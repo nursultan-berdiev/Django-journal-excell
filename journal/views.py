@@ -14,6 +14,12 @@ office = 'Головной'
 key_list_place = 'C:/Python/changan_journal/keylist.xlsx'
 
 
+def get_office(self):
+    user = Officer.objects.get(user=self.request.user)
+    office = get_object_or_404(Office, office_id=user.office.office_id)
+    return office
+
+
 def next_number(office_id):
     if Client.objects.filter(office=office_id).count() == 0:
         return 1
@@ -44,13 +50,16 @@ class ClientListView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(ClientListView, self).get_context_data(**kwargs)
-        context['title'] = 'Журнал Кредитного Специалиста - {}'.format(office)
+        context['title'] = 'Журнал Кредитного Специалиста - {}'.format(get_office(self).office_name)
         context['products'] = Product.objects.all()
         return context
 
+    def get_queryset(self):
+        return Client.objects.filter(office=get_office(self))
+
 
 class ActiveListView(ListView):
-    queryset = Client.objects.filter(status='На рассмотрении')
+    model = Client
     template_name = 'journal/home.html'
     context_object_name = 'clients'
     ordering = ['-nomer_zayavki']
@@ -58,9 +67,12 @@ class ActiveListView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(ActiveListView, self).get_context_data(**kwargs)
-        context['title'] = 'Активные заявки - {}'.format(office)
+        context['title'] = 'Активные заявки - {}'.format(get_office(self).office_name)
         context['products'] = Product.objects.all()
         return context
+
+    def get_queryset(self):
+        return Client.objects.filter(office=get_office(self), status='На рассмотрении')
 
 
 def SearchFilterView(request):
@@ -74,7 +86,7 @@ def SearchFilterView(request):
     date_max = request.GET.get('date_max')
     product = request.GET.get('product')
     officer = request.GET.get('officer')
-    title = 'Результаты поиска - {}'.format(office)
+    title = 'Результаты поиска - {}'.format(get_office(self).office_name)
 
     if is_valid_queryparam(search_contains_query):
         query_set = query_set.filter(fio_klienta__icontains=search_contains_query.title())
@@ -219,7 +231,7 @@ class ClientCreateView(CreateView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(ClientCreateView, self).get_context_data(**kwargs)
-        context['title'] = 'Создание заявки - {}'.format(office)
+        context['title'] = 'Создание заявки - {}'.format(get_office(self).office_name)
         context['is_create'] = True
         context['products'] = Product.objects.all()
         return context
@@ -228,8 +240,14 @@ class ClientCreateView(CreateView):
         user = Officer.objects.get(user=self.request.user)
         office = get_object_or_404(Office, office_id=user.office.office_id)
         form.instance.office = office
-        form.instance.nomer_zayavki = next_number(office.office_id)
+
         return super(ClientCreateView, self).form_valid(form)
+
+    def get_initial(self):
+        nomer_zayavki = next_number(get_office(self))
+        return {
+            'nomer_zayavki': nomer_zayavki,
+        }
 
 
 class ClientUpdateView(UserPassesTestMixin, UpdateView):
@@ -249,7 +267,7 @@ class ClientUpdateView(UserPassesTestMixin, UpdateView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(ClientUpdateView, self).get_context_data(**kwargs)
-        context['title'] = 'Изменение заявки - {}'.format(office)
+        context['title'] = 'Изменение заявки - {}'.format(get_office(self).office_name)
         context['is_create'] = False
         context['products'] = Product.objects.all()
         return context
@@ -269,7 +287,7 @@ class ClientDeleteView(UserPassesTestMixin, DeleteView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(ClientDeleteView, self).get_context_data(**kwargs)
-        context['title'] = 'Удаление заявки - {}'.format(office)
+        context['title'] = 'Удаление заявки - {}'.format(get_office(self).office_name)
         context['products'] = Product.objects.all()
         return context
 

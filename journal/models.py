@@ -60,7 +60,7 @@ class Product(models.Model):
 
 class Client(models.Model):
     office = models.ForeignKey(Office, on_delete=models.CASCADE, verbose_name='Офис')
-    nomer_zayavki = models.IntegerField(unique=True, verbose_name='Номер заявки')
+    nomer_zayavki = models.IntegerField(verbose_name='Номер заявки')
     date_posted = models.DateTimeField(default=timezone.now, verbose_name='Дата заявки')
     fio_klienta = models.CharField(max_length=100, verbose_name='ФИО клиента/Наименование компании')
     summa_zayavki = models.IntegerField(null=False, verbose_name='Сумма заявки')
@@ -78,6 +78,9 @@ class Client(models.Model):
                                        verbose_name='Номер протокола')
     credit_user = models.ForeignKey(Officer, on_delete=models.SET('Удаленный пользователь'),
                                     verbose_name='Кредитный специалист')
+
+    class Meta:
+        unique_together = (("office", "nomer_zayavki"),)
 
     def __str__(self):
         return self.fio_klienta
